@@ -1,0 +1,77 @@
+openapi: 3.0.3
+info:
+  title: CMS Registration Contract (UC-01)
+  version: 1.0.0
+  description: |
+    Contract for registering a new CMS account per UC-01 and UC01-AT-01 through UC01-AT-07.
+    Preconditions: user is not logged in and is accessing the registration page.
+    Postconditions: successful submission creates an account and redirects to login;
+    failed submission returns field-level validation errors and does not create an account.
+paths:
+  /register:
+    get:
+      summary: Display registration form
+      description: Returns the registration form for guest users.
+      responses:
+        "200":
+          description: Registration form HTML.
+          content:
+            text/html:
+              schema:
+                type: string
+    post:
+      summary: Submit registration form
+      description: |
+        Validates registration inputs and creates a user account on success.
+        Validation rules: name, email, password required; email format valid; email unique;
+        password requirements as defined by UC-01 and UC01-AT-04.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+              properties:
+                name:
+                  type: string
+                  description: User-provided display name.
+                email:
+                  type: string
+                  description: User-provided email address.
+                password:
+                  type: string
+                  description: User-provided password credential.
+      responses:
+        "303":
+          description: Registration succeeded; user is redirected to login.
+          headers:
+            Location:
+              description: Login page location.
+              schema:
+                type: string
+                example: /login
+        "400":
+          description: Registration failed due to invalid inputs; no account created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationError"
+components:
+  schemas:
+    ValidationError:
+      type: object
+      required:
+        - fieldErrors
+      properties:
+        fieldErrors:
+          type: object
+          additionalProperties:
+            type: string
+          description: Mapping of field name to field-level error message.
+          example:
+            email: "Invalid or already registered email"
+            password: "Password does not meet security requirements"
