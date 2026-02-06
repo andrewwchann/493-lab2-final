@@ -1,0 +1,450 @@
+openapi: 3.0.3
+info:
+  title: CMS Use-Case Contracts
+  version: 0.1.0
+  description: Behavioral API contracts derived from use cases; no implementation details.
+servers:
+  - url: /api
+paths:
+  /register:
+    post:
+      summary: Register account
+      description: Creates a new account and redirects to login on success.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrationRequest'
+      responses:
+        '201':
+          description: Account created
+        '400':
+          description: Invalid or missing fields
+        '409':
+          description: Email already registered
+  /login:
+    post:
+      summary: Log in
+      description: Authenticates a registered user and creates a session.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authenticated
+        '401':
+          description: Invalid credentials
+        '503':
+          description: Auth service unavailable
+  /password/change:
+    post:
+      summary: Change password
+      description: Changes password for an authenticated user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordChangeRequest'
+      responses:
+        '200':
+          description: Password changed
+        '400':
+          description: Validation error
+        '401':
+          description: Incorrect current password
+  /submissions:
+    post:
+      summary: Submit paper
+      description: Creates a new submission with metadata and manuscript file.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmissionRequest'
+      responses:
+        '201':
+          description: Submitted
+        '400':
+          description: Missing required metadata
+        '413':
+          description: File too large
+        '415':
+          description: Unsupported file format
+  /submissions/draft:
+    post:
+      summary: Save draft submission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DraftRequest'
+      responses:
+        '201':
+          description: Draft saved
+        '400':
+          description: Minimum draft info missing
+  /submissions/{submissionId}:
+    get:
+      summary: Get submission details
+      parameters:
+        - in: path
+          name: submissionId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Submission details
+        '404':
+          description: Not found
+  /submissions/{submissionId}/manuscript:
+    put:
+      summary: Update manuscript
+      description: Replaces manuscript file while preserving submission record.
+      parameters:
+        - in: path
+          name: submissionId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManuscriptUpdateRequest'
+      responses:
+        '200':
+          description: Manuscript updated
+        '400':
+          description: Missing metadata
+        '413':
+          description: File too large
+        '415':
+          description: Unsupported file format
+  /submissions/{submissionId}/submit:
+    post:
+      summary: Submit draft
+      description: Finalizes a draft submission.
+      parameters:
+        - in: path
+          name: submissionId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Draft submitted
+        '400':
+          description: Validation error or submission window closed
+  /papers/{submissionId}/reviewers:
+    post:
+      summary: Assign reviewers
+      description: Assigns exactly three reviewers and sends invitations.
+      parameters:
+        - in: path
+          name: submissionId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewerAssignmentRequest'
+      responses:
+        '200':
+          description: Reviewers assigned
+        '400':
+          description: Invalid reviewer count or workload limit exceeded
+        '404':
+          description: Reviewer not found
+  /reviewer-invitations/{invitationId}/response:
+    post:
+      summary: Respond to invitation
+      parameters:
+        - in: path
+          name: invitationId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvitationResponseRequest'
+      responses:
+        '200':
+          description: Response recorded
+        '400':
+          description: Invitation expired or invalid
+  /reviewers/me/assignments:
+    get:
+      summary: List accepted assignments
+      responses:
+        '200':
+          description: List of accepted assignments
+  /reviewers/me/assignments/{assignmentId}/review-form:
+    get:
+      summary: Access review form
+      parameters:
+        - in: path
+          name: assignmentId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Review form
+        '403':
+          description: Not accepted or unauthorized
+        '410':
+          description: Review period closed
+  /reviews:
+    post:
+      summary: Submit review
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewSubmissionRequest'
+      responses:
+        '201':
+          description: Review submitted
+        '400':
+          description: Missing required fields
+        '410':
+          description: Review period closed
+  /papers/{submissionId}/reviews:
+    get:
+      summary: Retrieve completed reviews
+      parameters:
+        - in: path
+          name: submissionId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Completed reviews
+        '409':
+          description: Fewer than required reviews
+  /papers/{submissionId}/decision:
+    post:
+      summary: Submit final decision
+      parameters:
+        - in: path
+          name: submissionId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecisionRequest'
+      responses:
+        '200':
+          description: Decision recorded
+        '409':
+          description: Fewer than three reviews
+  /schedule/generate:
+    post:
+      summary: Generate schedule
+      responses:
+        '201':
+          description: Draft schedule generated
+        '409':
+          description: No accepted papers
+  /schedule:
+    put:
+      summary: Edit schedule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleEditRequest'
+      responses:
+        '200':
+          description: Schedule updated
+        '400':
+          description: Conflict or invalid timeslot
+  /schedule/publish:
+    post:
+      summary: Publish schedule
+      responses:
+        '200':
+          description: Schedule published
+        '400':
+          description: Publication failed or cancelled
+  /schedule/public:
+    get:
+      summary: View published schedule
+      responses:
+        '200':
+          description: Published schedule
+  /pricing:
+    get:
+      summary: View pricing by attendee type
+      responses:
+        '200':
+          description: Pricing list
+        '404':
+          description: Pricing not configured
+  /registrations:
+    post:
+      summary: Register for conference and pay
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrationPaymentRequest'
+      responses:
+        '201':
+          description: Registration confirmed
+        '402':
+          description: Payment declined
+        '400':
+          description: Invalid payment details
+  /registrations/{registrationId}/ticket:
+    get:
+      summary: Retrieve confirmation ticket
+      parameters:
+        - in: path
+          name: registrationId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Ticket
+        '503':
+          description: Ticket delayed
+components:
+  schemas:
+    RegistrationRequest:
+      type: object
+      required: [name, email, password]
+      properties:
+        name: { type: string }
+        email: { type: string }
+        password: { type: string }
+    LoginRequest:
+      type: object
+      required: [identifier, password]
+      properties:
+        identifier: { type: string, description: "Email or username as allowed by policy" }
+        password: { type: string }
+    PasswordChangeRequest:
+      type: object
+      required: [currentPassword, newPassword, confirmPassword]
+      properties:
+        currentPassword: { type: string }
+        newPassword: { type: string }
+        confirmPassword: { type: string }
+    SubmissionRequest:
+      type: object
+      required: [authors, abstract, keywords, manuscript]
+      properties:
+        title: { type: string }
+        authors: { type: array, items: { type: string } }
+        affiliation: { type: string }
+        contactInfo: { type: string }
+        abstract: { type: string }
+        keywords: { type: array, items: { type: string } }
+        manuscript:
+          $ref: '#/components/schemas/ManuscriptFile'
+    DraftRequest:
+      type: object
+      required: [title]
+      properties:
+        title: { type: string }
+        authors: { type: array, items: { type: string } }
+        abstract: { type: string }
+        keywords: { type: array, items: { type: string } }
+        manuscript:
+          $ref: '#/components/schemas/ManuscriptFile'
+    ManuscriptUpdateRequest:
+      type: object
+      required: [manuscript]
+      properties:
+        manuscript:
+          $ref: '#/components/schemas/ManuscriptFile'
+    ManuscriptFile:
+      type: object
+      required: [filename, format, sizeMb]
+      properties:
+        filename: { type: string }
+        format: { type: string, enum: [PDF, Word, LaTeX] }
+        sizeMb: { type: number }
+    ReviewerAssignmentRequest:
+      type: object
+      required: [reviewerEmails]
+      properties:
+        reviewerEmails:
+          type: array
+          minItems: 3
+          maxItems: 3
+          items: { type: string }
+    InvitationResponseRequest:
+      type: object
+      required: [response]
+      properties:
+        response: { type: string, enum: [Accept, Decline] }
+    ReviewSubmissionRequest:
+      type: object
+      required: [submissionId, ratings, comments, recommendation]
+      properties:
+        submissionId: { type: string }
+        ratings: { type: object }
+        comments: { type: string }
+        recommendation: { type: string }
+    DecisionRequest:
+      type: object
+      required: [outcome]
+      properties:
+        outcome: { type: string, enum: [Accept, Reject] }
+    ScheduleEditRequest:
+      type: object
+      required: [entries]
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScheduleEntry'
+    ScheduleEntry:
+      type: object
+      required: [submissionId, room, timeslot]
+      properties:
+        submissionId: { type: string }
+        room: { type: string }
+        timeslot: { type: string }
+    RegistrationPaymentRequest:
+      type: object
+      required: [attendeeId, categoryId, payment]
+      properties:
+        attendeeId: { type: string }
+        categoryId: { type: string }
+        payment:
+          $ref: '#/components/schemas/PaymentDetails'
+    PaymentDetails:
+      type: object
+      required: [cardNumber, expiryMonth, expiryYear, cvv]
+      properties:
+        cardNumber: { type: string }
+        expiryMonth: { type: string }
+        expiryYear: { type: string }
+        cvv: { type: string }
