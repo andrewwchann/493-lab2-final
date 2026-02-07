@@ -24,8 +24,9 @@ HTML5, CSS3, JavaScript (ES6+) - vanilla only: Follow standard conventions
 
 ## Recent Changes
 - 001-usecase-specification: Added HTML5, CSS3, JavaScript (ES6+) - vanilla only + None (no frontend or CSS frameworks permitted)
-
 - 001-usecase-specification: Added HTML5, CSS3, JavaScript (ES6+) - vanilla only + None (no frontend or CSS frameworks permitted)
+- 001-usecase-specification: Added HTML5, CSS3, JavaScript (ES6+) - vanilla only + None (no frontend or CSS frameworks permitted)
+
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

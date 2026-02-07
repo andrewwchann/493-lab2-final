@@ -1,31 +1,30 @@
 # Quickstart: Use Case Specification Expansion
 
-**Date**: February 5, 2026  
-**Spec**: `/home/ajchan/ECE493/lab/lab2/493-lab2-final/specs/001-usecase-specification/spec.md`
+**Spec**: /home/ajchan/ECE493/lab/lab2/493-lab2-final/specs/001-usecase-specification/spec.md
 
 ## Purpose
+This project implements the CMS strictly to satisfy UC-01 through UC-23 and the
+associated acceptance tests. The web stack is vanilla HTML/CSS/JS and follows
+MVC separation. Requirements not specified in use cases/tests (performance,
+availability SLAs, accessibility, browser support) are out of scope.
 
-This quickstart guides reviewers through the specification artifacts derived from the authoritative use cases and acceptance tests.
+## Project Layout
+- Source: /home/ajchan/ECE493/lab/lab2/493-lab2-final/src/
+- Acceptance tests: /home/ajchan/ECE493/lab/lab2/493-lab2-final/acceptance_tests/
+- Specs: /home/ajchan/ECE493/lab/lab2/493-lab2-final/specs/001-usecase-specification/
 
-## Review Steps
+## Run Tests
+If the project has an npm test harness configured, run:
 
-1. Read the specification:
-   - `/home/ajchan/ECE493/lab/lab2/493-lab2-final/specs/001-usecase-specification/spec.md`
+```
+npm test && npm run lint
+```
 
-2. Review the research decisions (scope, constraints, and clarifications):
-   - `/home/ajchan/ECE493/lab/lab2/493-lab2-final/specs/001-usecase-specification/research.md`
+If no automated test harness exists, use the acceptance test suites to validate
+behavior manually against the implemented UI flows.
 
-3. Inspect the conceptual data model:
-   - `/home/ajchan/ECE493/lab/lab2/493-lab2-final/specs/001-usecase-specification/data-model.md`
-
-4. Review behavioral contracts:
-   - `/home/ajchan/ECE493/lab/lab2/493-lab2-final/specs/001-usecase-specification/contracts/cms-api.yaml`
-
-5. Cross-check against the authoritative sources:
-   - `/home/ajchan/ECE493/lab/lab2/493-lab2-final/use_cases/`
-   - `/home/ajchan/ECE493/lab/lab2/493-lab2-final/acceptance_tests/`
-
-## Notes
-
-- All artifacts preserve use case intent and traceability.
-- No implementation code is included; documents are design- and behavior-only.
+## Development Notes
+- Do not introduce frameworks; use vanilla HTML/CSS/JS only.
+- Keep MVC separation; avoid business logic in views.
+- Trace every task to a specific use case and acceptance test.
+- Pricing configuration is preloaded; no admin config UI is required.
