@@ -22,7 +22,7 @@
 - Q: What is a "role-based dashboard"? → A: A dashboard view that exposes only the modules permitted for the authenticated user's role.
 - Q: Are review form field types and scales specified? → A: Required fields are ratings/scores, comments, and a recommendation; scoring scales are not specified in use cases/tests.
 - Q: Are schedule publication notifications required? → A: Notifications are optional; publication is still successful if notification delivery fails.
-- Q: How do UC-18 and UC-20 publication steps relate? → A: UC-18 may proceed to publication after draft generation, but the publication step must satisfy UC-20 confirmation, finalization, public visibility, and failure handling requirements.
+- Q: How do UC-18 and UC-20 publication steps relate? → A: UC-18 ends after draft generation/preview; publication is handled exclusively in UC-20 with confirmation, finalization, public visibility, and failure handling requirements.
 
 ## Scope
 
@@ -116,6 +116,8 @@ As a registered user, I want to log in so I can access my role-based CMS dashboa
 **Why this priority**: Login is required to use any authenticated CMS features.
 
 **Independent Test**: Can be fully tested by logging in with valid and invalid credentials.
+
+**Clarification**: Login identifier accepts either email or username, as allowed in UC-05.
 
 **Flow (from UC-03)**:
 1. User navigates to the CMS login page.
@@ -480,6 +482,8 @@ As an editor, I want to generate a conference schedule so accepted papers are or
 
 **Independent Test**: Can be fully tested by generating a schedule when accepted papers exist.
 
+**Clarification**: Schedule publication is handled in UC-20; UC-18 ends after draft generation and preview.
+
 **Flow (from UC-18)**:
 1. Editor navigates to the Scheduling module.
 2. CMS displays the list of accepted papers eligible for scheduling.
@@ -488,11 +492,10 @@ As an editor, I want to generate a conference schedule so accepted papers are or
 5. CMS produces a draft schedule in HTML program format.
 6. CMS stores the generated schedule in the database.
 7. CMS displays the schedule preview for editor review.
-8. Editor confirms the schedule is ready for publication.
-9. CMS publishes the final schedule to the conference public website.
+8. CMS marks the schedule as Draft and indicates it is ready for publication via UC-20.
 
 **Acceptance Scenarios**:
-1. **Given** accepted papers exist, **When** the editor generates the schedule and confirms publication, **Then** a draft schedule is produced, stored, and published successfully. (UC-18; UC15-AT-01 in UC-18 suite)
+1. **Given** accepted papers exist, **When** the editor generates the schedule, **Then** a draft schedule is produced, stored, and ready for publication via UC-20. (UC-18; UC15-AT-01 in UC-18 suite)
 2. **Given** no accepted papers exist, **When** the editor attempts generation, **Then** the system blocks schedule creation with an error. (UC-18; UC15-AT-02 in UC-18 suite)
 
 ---
@@ -550,7 +553,7 @@ As an editor, I want to publish the finalized schedule so it is publicly visible
 
 ### User Story 21 - Register for Conference and Pay (Priority: P5)
 
-As an attendee, I want to register and pay by credit card so my attendance is confirmed. (UC-21)
+As a guest or attendee, I want to register and pay by credit card so my attendance is confirmed. (UC-21)
 
 **Why this priority**: Registration and payment confirm attendance and funding.
 
@@ -646,6 +649,7 @@ As an attendee, I want to view pricing by category so I can decide before paymen
 - Password validation criteria are exactly those exercised by UC-02 and UC-04 acceptance tests; no additional standards are implied. (UC-02, UC-04)
 - Submission, review, and registration windows are configured by organizers and enforced by the CMS. (UC-06, UC-09, UC-12, UC-14, UC-21)
 - Review deadlines restrict both form access and review submission. (UC-12, UC-14)
+- For UC-21, guests may access pricing and initiate registration/payment; attendee role-based access applies after approved registration for viewing protected registration or ticket records. (UC-21, UC-22, UC-23)
 - Published schedules are publicly viewable. (UC-20)
 - CMS data storage technology is intentionally unspecified; only a generic CMS database is assumed. (UC-01 to UC-23)
 - Pricing categories and fees are preconfigured in the CMS database; pricing configuration UI is out of scope. (UC-23)
@@ -668,7 +672,7 @@ Each requirement cites the originating use case and acceptance test identifier(s
 - **FR-010**: System MUST reject password changes when the current password is incorrect, the confirmation does not match, or the new password is invalid. (Refs: UC-04; Tests: UC04-AT-02, UC04-AT-03, UC04-AT-04)
 - **FR-011**: System MUST allow authors to submit papers with required metadata and a manuscript file, storing the submission and marking status as Submitted on success. (Refs: UC-06; Tests: UC06-AT-01 in UC-06 suite)
 - **FR-012**: System MUST enforce required submission metadata fields and require a manuscript file before allowing submission or update. (Refs: UC-08; Tests: UC06-AT-02, UC06-AT-03, UC06-AT-04, UC06-AT-05 in UC-08 suite)
-- **FR-013**: System MUST enforce manuscript formats of PDF, Word, or LaTeX and a maximum size of 7.0MB for both submission and updates. (Refs: UC-06, UC-07, UC-08; Tests: UC06-AT-03, UC06-AT-04 in UC-06 suite; UC06-AT-02, UC06-AT-03 in UC-07 suite; UC06-AT-06, UC06-AT-07 in UC-08 suite)
+- **FR-013**: System MUST enforce manuscript upload formats of `.pdf`, `.doc`, `.docx`, `.tex`, or `.zip` (LaTeX source bundle) and a maximum size of 7.0MB for both submission and updates. (Refs: UC-06, UC-07, UC-08; Tests: UC06-AT-03, UC06-AT-04 in UC-06 suite; UC06-AT-02, UC06-AT-03 in UC-07 suite; UC06-AT-06, UC06-AT-07 in UC-08 suite)
 - **FR-014**: System MUST allow authors to save drafts at any time with minimum required draft information (at least a title or identifier) and store them with Draft status outside the review workflow. (Refs: UC-09; Tests: UC06-AT-01 in UC-09 suite)
 - **FR-015**: System MUST allow authors to resume editing a saved draft with previously entered data restored. (Refs: UC-09; Tests: UC06-AT-02 in UC-09 suite)
 - **FR-016**: System MUST reject draft saves that lack the minimum required draft information and show a corrective error. (Refs: UC-09; Tests: UC06-AT-03 in UC-09 suite)
@@ -682,11 +686,11 @@ Each requirement cites the originating use case and acceptance test identifier(s
 - **FR-024**: System MUST mark papers as Reviews Complete only after exactly three reviews are submitted and make the full review set available to editors, even if notifications fail. (Refs: UC-15; Tests: UC15-AT-01, UC15-AT-02, UC15-AT-03)
 - **FR-025**: System MUST allow editors to submit final accept or reject decisions only when three reviews are complete, storing the decision and updating paper status. (Refs: UC-16; Tests: UC16-AT-01, UC16-AT-02)
 - **FR-026**: System MUST notify authors of final decisions via email and dashboard, and ensure dashboard visibility even when email delivery fails. (Refs: UC-17; Tests: UC06-AT-01, UC06-AT-02, UC06-AT-03 in UC-17 suite)
-- **FR-027**: System MUST allow editors to generate a draft conference schedule when accepted papers exist, store it for preview, and proceed to publication only after editor confirmation using UC-20 publication rules. (Refs: UC-18; Tests: UC15-AT-01, UC15-AT-02 in UC-18 suite)
+- **FR-027**: System MUST allow editors to generate a draft conference schedule when accepted papers exist and store it for preview prior to publication. (Refs: UC-18; Tests: UC15-AT-01, UC15-AT-02 in UC-18 suite)
 - **FR-028**: System MUST allow editors to edit draft schedules, prevent conflicts and invalid times, and save or cancel edits without publishing. (Refs: UC-19; Tests: UC16-AT-01, UC16-AT-02, UC16-AT-03, UC16-AT-04 in UC-19 suite)
 - **FR-029**: System MUST allow editors to publish a finalized schedule only after confirmation, making it publicly accessible, and keep it in draft if publication fails. (Refs: UC-20; Tests: UC06-AT-01, UC06-AT-02, UC06-AT-03, UC06-AT-04 in UC-20 suite)
 - **FR-030**: System MUST display attendee pricing by category and require a valid category selection before payment can proceed. (Refs: UC-23; Tests: UC06-AT-01, UC06-AT-03 in UC-23 suite)
-- **FR-031**: System MUST allow attendees to register with credit card payment, confirm registration only on approved payment, and block registration on declined payment. (Refs: UC-21; Tests: UC15-AT-01, UC15-AT-03 in UC-21 suite)
+- **FR-031**: System MUST allow guests or attendees to register with credit card payment, confirm registration only on approved payment, and block registration on declined payment. (Refs: UC-21; Tests: UC15-AT-01, UC15-AT-03 in UC-21 suite)
 - **FR-032**: System MUST generate and store a confirmation ticket with a unique reference after successful payment, keep the ticket accessible if email fails, and confirm registration even when ticket generation fails (ticket delayed with notice). (Refs: UC-22; Tests: UC16-AT-01, UC16-AT-02, UC16-AT-03 in UC-22 suite; UC15-AT-04 in UC-21 suite)
 
 ### Non-Functional Requirements

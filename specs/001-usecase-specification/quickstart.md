@@ -23,6 +23,21 @@ npm test && npm run lint
 If no automated test harness exists, use the acceptance test suites to validate
 behavior manually against the implemented UI flows.
 
+For the current implementation, run the automated scenario checks that map to
+SC-001 through SC-008:
+
+```
+node tests/acceptance/run_acceptance_checks.js
+```
+
+Results are written to:
+
+```
+tests/acceptance/results/sc-001.md
+...
+tests/acceptance/results/sc-008.md
+```
+
 ## Development Notes
 - Do not introduce frameworks; use vanilla HTML/CSS/JS only.
 - Keep MVC separation; avoid business logic in views.

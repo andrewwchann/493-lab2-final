@@ -123,7 +123,7 @@ No constitution violations requiring justification.
 - Separate tasks for success-path behavior and each extension/failure path.
 - Separate tasks for data validation rules and UI error presentation.
 - Separate tasks for integration boundaries (file upload, notification, payment, public website publication, ticketing).
-- No task should span multiple use cases unless it is a shared foundation (e.g., router, auth, data store).
+- No task should span multiple use cases unless it is a shared foundation (e.g., router, auth, data store) or a documented acceptance-coupled behavior (for example, UC-03/UC-05 shared login validation/failure handling).
 
 ### Shared Foundation Task Seeds (Trace: UC-01 to UC-23)
 - MVC skeleton (routes, view helpers, data store interface).
