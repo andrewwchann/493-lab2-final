@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reviewer Invitation</title>
+</head>
+<body>
+  <main>
+    <h1>Reviewer Invitation Response</h1>
+    <p>Select one of your pending invitations, then accept or decline.</p>
+
+    <h2>Pending Invitations</h2>
+    <p id="invitation-empty" aria-live="polite"></p>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Assignment ID</th>
+          <th>Submission ID</th>
+          <th>Title</th>
+          <th>Abstract</th>
+          <th>Deadline</th>
+          <th>Manuscript</th>
+        </tr>
+      </thead>
+      <tbody id="invitation-list"></tbody>
+    </table>
+
+    <form method="post" action="/reviews/invitation/respond" novalidate>
+      <label for="assignment-id">Assignment ID</label>
+      <input id="assignment-id" name="assignmentId" type="number" required>
+
+      <label for="invitation-response">Response</label>
+      <select id="invitation-response" name="response" required>
+        <option value="accept">Accept</option>
+        <option value="decline">Decline</option>
+      </select>
+
+      <button type="submit">Submit Response</button>
+    </form>
+
+    <p id="invitation-message" aria-live="polite"></p>
+    <p id="invitation-errors" aria-live="polite"></p>
+    <p><a href="/reviews/assignments">Back to Assigned Papers</a></p>
+  </main>
+
+  <script>
+    window.renderReviewerInvitation = function renderReviewerInvitation(payload) {
+      var assignmentField = document.getElementById('assignment-id');
+      if (payload.assignmentId) {
+        assignmentField.value = payload.assignmentId;
+      }
+
+      document.getElementById('invitation-message').textContent = payload.message || '';
+      document.getElementById('invitation-errors').textContent =
+        (payload.errors && payload.errors.form) || '';
+
+      var tbody = document.getElementById('invitation-list');
+      var empty = document.getElementById('invitation-empty');
+      tbody.innerHTML = '';
+      var invitations = payload.invitations || [];
+      if (invitations.length === 0) {
+        empty.textContent = 'No pending invitations.';
+      } else {
+        empty.textContent = '';
+        invitations.forEach(function (invitation) {
+          var row = document.createElement('tr');
+          var manuscript = invitation.manuscriptUrl
+            ? '<a href=\"' + invitation.manuscriptUrl + '\" target=\"_blank\" rel=\"noopener\">' +
+                (invitation.manuscriptFileName || 'View') + '</a>'
+            : 'Unavailable';
+          row.innerHTML =
+            '<td><button type=\"button\" data-assignment-id=\"' + invitation.id + '\">' + invitation.id + '</button></td>' +
+            '<td>' + invitation.submissionId + '</td>' +
+            '<td>' + (invitation.title || '') + '</td>' +
+            '<td>' + (invitation.abstract || '') + '</td>' +
+            '<td>' + (invitation.reviewDeadline || 'Not set') + '</td>' +
+            '<td>' + manuscript + '</td>';
+          tbody.appendChild(row);
+        });
+
+        tbody.querySelectorAll('button[data-assignment-id]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            assignmentField.value = btn.getAttribute('data-assignment-id');
+          });
+        });
+
+        if (!assignmentField.value && invitations[0] && invitations[0].id) {
+          assignmentField.value = invitations[0].id;
+        }
+      }
+    };
+  </script>
+</body>
+</html>

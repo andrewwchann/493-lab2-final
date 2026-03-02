@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Schedule Preview</title>
+</head>
+<body>
+  <main>
+    <h1>Draft Schedule Preview</h1>
+    <section>
+      <h2>Accepted Papers Eligible for Scheduling</h2>
+      <p id="accepted-paper-empty" aria-live="polite"></p>
+      <table border="1">
+        <thead>
+          <tr>
+            <th>Submission ID</th>
+            <th>Title</th>
+            <th>Authors</th>
+            <th>Select</th>
+          </tr>
+        </thead>
+        <tbody id="accepted-paper-list"></tbody>
+      </table>
+    </section>
+
+    <form method="post" action="/schedule/generate">
+      <label for="accepted-submission-ids">Accepted Submission IDs (comma-separated, leave blank to include all accepted papers)</label>
+      <input id="accepted-submission-ids" name="acceptedSubmissionIds" type="text">
+      <button type="submit">Generate Draft Schedule</button>
+    </form>
+
+    <section>
+      <h2>Preview</h2>
+      <div id="schedule-preview-content"></div>
+      <p id="schedule-preview-error" aria-live="polite"></p>
+    </section>
+    <p><a href="/schedule/edit">Go to Edit Schedule</a> | <a href="/schedule/publish">Go to Publish Schedule</a></p>
+    <p><a href="/dashboard/editor">Back to Editor Dashboard</a></p>
+  </main>
+  <script>
+    window.renderSchedulePreview = function renderSchedulePreview(payload) {
+      var accepted = payload.acceptedPapers || [];
+      var acceptedBody = document.getElementById('accepted-paper-list');
+      var acceptedEmpty = document.getElementById('accepted-paper-empty');
+      var selectedInput = document.getElementById('accepted-submission-ids');
+      acceptedBody.innerHTML = '';
+
+      if (accepted.length === 0) {
+        acceptedEmpty.textContent = 'No accepted papers are currently available for scheduling.';
+      } else {
+        acceptedEmpty.textContent = '';
+        accepted.forEach(function (paper) {
+          var row = document.createElement('tr');
+          row.innerHTML =
+            '<td>' + paper.id + '</td>' +
+            '<td>' + (paper.title || '') + '</td>' +
+            '<td>' + (paper.authorNames || '') + '</td>' +
+            '<td><button type="button" data-accepted-id="' + paper.id + '">Use</button></td>';
+          acceptedBody.appendChild(row);
+        });
+      }
+
+      acceptedBody.querySelectorAll('button[data-accepted-id]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          var id = button.getAttribute('data-accepted-id');
+          var current = selectedInput.value
+            .split(',')
+            .map(function (part) { return part.trim(); })
+            .filter(Boolean);
+          if (!current.includes(id)) {
+            current.push(id);
+          }
+          selectedInput.value = current.join(', ');
+        });
+      });
+
+      if (!selectedInput.value && accepted.length > 0) {
+        selectedInput.value = accepted.map(function (paper) { return String(paper.id); }).join(', ');
+      }
+
+      document.getElementById('schedule-preview-error').textContent =
+        (payload.errors && payload.errors.form) || '';
+      document.getElementById('schedule-preview-content').innerHTML = payload.previewHtml || '';
+    };
+  </script>
+</body>
+</html>

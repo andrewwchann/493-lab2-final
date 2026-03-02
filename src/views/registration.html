@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Conference Registration</title>
+</head>
+<body>
+  <main>
+    <h1>Conference Registration</h1>
+    <form method="post" action="/conference/register" novalidate autocomplete="on">
+      <label for="attendee-name">Attendee Name</label>
+      <input id="attendee-name" name="attendeeName" type="text" autocomplete="name" required>
+
+      <label for="pricing-category-id">Attendee Category</label>
+      <select id="pricing-category-id" name="pricingCategoryId" required></select>
+
+      <label for="card-number">Card Number</label>
+      <input id="card-number" name="cardNumber" type="text" inputmode="numeric" autocomplete="cc-number" placeholder="1234 5678 9012 3456" required>
+
+      <label for="card-expiry">Card Expiry</label>
+      <input id="card-expiry" name="expiry" type="text" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/YY" required>
+
+      <label for="card-cvv">Card CVV</label>
+      <input id="card-cvv" name="cvv" type="password" inputmode="numeric" autocomplete="cc-csc" placeholder="CVV" required>
+
+      <button type="submit">Pay and Register</button>
+    </form>
+
+    <p id="registration-error" aria-live="polite"></p>
+    <p id="registration-warning" aria-live="polite"></p>
+    <p id="registration-success" aria-live="polite"></p>
+    <div id="registration-ticket"></div>
+  </main>
+  <script>
+    window.renderConferenceRegistration = function renderConferenceRegistration(payload) {
+      var select = document.getElementById('pricing-category-id');
+      select.innerHTML = '';
+      (payload.categories || []).forEach(function (category) {
+        var option = document.createElement('option');
+        option.value = category.id;
+        option.textContent = category.attendeeType + ' - ' + category.currency + ' ' + category.price;
+        select.appendChild(option);
+      });
+
+      var errors = payload.errors || {};
+      var firstError = errors.form || errors.pricingCategoryId || errors.cardNumber || errors.expiry || errors.cvv || '';
+      document.getElementById('registration-error').textContent = firstError;
+      document.getElementById('registration-warning').textContent = payload.warning || '';
+      document.getElementById('registration-success').textContent = payload.registration
+        ? 'Registration confirmed.'
+        : '';
+      document.getElementById('registration-ticket').innerHTML = payload.ticket
+        ? '<p>Ticket Reference: ' + payload.ticket.ticketReference + '</p>'
+        : '';
+    };
+  </script>
+</body>
+</html>

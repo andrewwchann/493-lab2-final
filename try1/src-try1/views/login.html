@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login</title>
+</head>
+<body>
+  <main>
+    <h1>Login</h1>
+    <form method="post" action="/login" novalidate>
+      <label for="identifier">Email or Username</label>
+      <input id="identifier" name="identifier" type="text" required>
+      <p id="identifier-error" class="error" aria-live="polite"></p>
+
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" required>
+      <p id="password-error" class="error" aria-live="polite"></p>
+
+      <button type="submit">Log In</button>
+    </form>
+    <p id="form-error" aria-live="polite"></p>
+  </main>
+  <script>
+    window.renderLoginErrors = function renderLoginErrors(errors) {
+      document.getElementById('identifier-error').textContent = errors.identifier || '';
+      document.getElementById('password-error').textContent = errors.password || '';
+      document.getElementById('form-error').textContent = errors.form || '';
+    };
+  </script>
+</body>
+</html>

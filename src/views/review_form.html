@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Review Form</title>
+</head>
+<body>
+  <main>
+    <h1>Review Form</h1>
+    <form method="post" action="/reviews/form/submit" novalidate>
+      <label for="review-assignment-id">Assignment ID</label>
+      <input id="review-assignment-id" name="assignmentId" type="number" required>
+
+      <label for="review-scores">Scores</label>
+      <textarea id="review-scores" name="scores" required placeholder='{"overall":4}'></textarea>
+
+      <label for="review-comments">Comments</label>
+      <textarea id="review-comments" name="comments" required></textarea>
+
+      <label for="review-recommendation">Recommendation</label>
+      <select id="review-recommendation" name="recommendation" required>
+        <option value="">Select</option>
+        <option value="accept">Accept</option>
+        <option value="reject">Reject</option>
+      </select>
+
+      <button type="submit" formaction="/reviews/form/save" formmethod="post">Save Progress</button>
+      <button type="submit">Submit Review</button>
+    </form>
+
+    <p id="review-message" aria-live="polite"></p>
+    <p id="review-errors" aria-live="polite"></p>
+    <p id="review-manuscript"></p>
+    <p><a href="/reviews/assignments">Back to Assigned Papers</a></p>
+  </main>
+
+  <script>
+    window.renderReviewForm = function renderReviewForm(payload) {
+      var assignmentField = document.getElementById('review-assignment-id');
+      if (payload.assignmentId) {
+        assignmentField.value = payload.assignmentId;
+      }
+
+      var form = payload.form || {};
+      if (form.assignmentId) {
+        assignmentField.value = form.assignmentId;
+      }
+      if (form.scores) {
+        document.getElementById('review-scores').value =
+          typeof form.scores === 'string' ? form.scores : JSON.stringify(form.scores);
+      }
+      if (form.comments) {
+        document.getElementById('review-comments').value = form.comments;
+      }
+      if (form.recommendation) {
+        document.getElementById('review-recommendation').value = form.recommendation;
+      }
+
+      var messageMap = {
+        'review-saved': 'Review draft saved successfully.'
+      };
+      document.getElementById('review-message').textContent =
+        messageMap[payload.message] || payload.message || '';
+      document.getElementById('review-errors').textContent =
+        (payload.errors && payload.errors.form) || '';
+      document.getElementById('review-manuscript').innerHTML = payload.manuscriptUrl
+        ? 'Manuscript: <a href=\"' + payload.manuscriptUrl + '\" target=\"_blank\" rel=\"noopener\">' +
+            (payload.manuscriptFileName || 'View Manuscript') + '</a>'
+        : '';
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Draft Submissions</title>
+</head>
+<body>
+  <main>
+    <h1>Draft Submissions</h1>
+    <p id="draft-save-error" aria-live="polite"></p>
+    <p id="draft-window-error" aria-live="polite"></p>
+    <ul id="draft-list"></ul>
+    <h2>Submitted Papers</h2>
+    <ul id="submitted-paper-list"></ul>
+    <p><a href="/submissions/new">Create New Submission</a></p>
+  </main>
+  <script>
+    window.renderDraftList = function renderDraftList(payload) {
+      var errors = payload.errors || {};
+      document.getElementById('draft-save-error').textContent = errors.save || '';
+      document.getElementById('draft-window-error').textContent = errors.window || '';
+
+      var list = document.getElementById('draft-list');
+      list.innerHTML = '';
+      var drafts = payload.drafts || [];
+      var submittedPapers = payload.submittedPapers || [];
+
+      if (drafts.length === 0) {
+        var empty = document.createElement('li');
+        empty.textContent = 'No draft submissions found.';
+        list.appendChild(empty);
+      } else {
+        drafts.forEach(function (draft) {
+          var item = document.createElement('li');
+          item.innerHTML =
+            '<strong>' + (draft.title || ('Draft #' + draft.id)) + '</strong>' +
+            ' <form method="post" action="/submissions/drafts/resume" style="display:inline">' +
+            '<input type="hidden" name="submissionId" value="' + draft.id + '">' +
+            '<button type="submit">Resume</button></form>' +
+            ' <form method="post" action="/submissions/drafts/submit" style="display:inline">' +
+            '<input type="hidden" name="submissionId" value="' + draft.id + '">' +
+            '<input type="hidden" name="file" value="draft-' + draft.id + '.pdf">' +
+            '<button type="submit">Submit Draft</button></form>';
+          list.appendChild(item);
+        });
+      }
+
+      var submittedList = document.getElementById('submitted-paper-list');
+      submittedList.innerHTML = '';
+      if (submittedPapers.length === 0) {
+        var emptySubmitted = document.createElement('li');
+        emptySubmitted.textContent = 'No submitted papers yet.';
+        submittedList.appendChild(emptySubmitted);
+        return;
+      }
+
+      submittedPapers.forEach(function (paper) {
+        var item = document.createElement('li');
+        var manuscriptLink = paper.manuscriptUrl
+          ? '<a href=\"' + paper.manuscriptUrl + '\" target=\"_blank\" rel=\"noopener\">' +
+              (paper.manuscriptFileName || 'View Manuscript') + '</a>'
+          : 'No manuscript available';
+        item.innerHTML =
+          '<strong>#' + paper.id + '</strong> ' +
+          (paper.title || '') +
+          ' (' + (paper.status || '') + ') - ' + manuscriptLink;
+        submittedList.appendChild(item);
+      });
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Schedule Preview</title>
+</head>
+<body>
+  <main>
+    <h1>Draft Schedule Preview</h1>
+    <form method="post" action="/schedule/generate">
+      <label for="accepted-submission-ids">Accepted Submission IDs (comma-separated)</label>
+      <input id="accepted-submission-ids" name="acceptedSubmissionIds" type="text" required>
+      <button type="submit">Generate Draft Schedule</button>
+    </form>
+
+    <section>
+      <h2>Preview</h2>
+      <div id="schedule-preview-content"></div>
+      <p id="schedule-preview-error" aria-live="polite"></p>
+    </section>
+  </main>
+  <script>
+    window.renderSchedulePreview = function renderSchedulePreview(payload) {
+      document.getElementById('schedule-preview-error').textContent =
+        (payload.errors && payload.errors.form) || '';
+      document.getElementById('schedule-preview-content').innerHTML = payload.previewHtml || '';
+    };
+  </script>
+</body>
+</html>

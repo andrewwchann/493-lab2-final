@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Assign Reviewers</title>
+</head>
+<body>
+  <main>
+    <h1>Assign Reviewers</h1>
+    <p>Enter a submitted paper ID and exactly three reviewer emails.</p>
+
+    <form method="post" action="/reviews/assign" novalidate>
+      <label for="submissionId">Submission ID</label>
+      <input id="submissionId" name="submissionId" type="number" required>
+
+      <label for="reviewerEmails">Reviewer Emails (comma-separated)</label>
+      <input id="reviewerEmails" name="reviewerEmails" type="text" required>
+
+      <label for="reviewDeadline">Review Deadline (optional)</label>
+      <input id="reviewDeadline" name="reviewDeadline" type="datetime-local">
+
+      <button type="submit">Assign Reviewers</button>
+    </form>
+
+    <p id="assign-errors" aria-live="polite"></p>
+    <p id="assign-success" aria-live="polite"></p>
+
+    <h2>Reviewer Directory</h2>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Email</th>
+          <th>Active Assignments</th>
+          <th>Remaining Slots</th>
+        </tr>
+      </thead>
+      <tbody id="reviewer-directory"></tbody>
+    </table>
+
+    <h2>Latest Assignment Result</h2>
+    <ul id="assignment-result"></ul>
+  </main>
+
+  <script>
+    window.renderAssignReviewers = function renderAssignReviewers(payload) {
+      var errors = payload.errors || {};
+      var reviewers = payload.reviewers || [];
+      var assignments = payload.assignments || [];
+
+      document.getElementById('assign-errors').textContent = errors.form || '';
+      document.getElementById('assign-success').textContent = payload.message || '';
+
+      var directory = document.getElementById('reviewer-directory');
+      directory.innerHTML = '';
+      reviewers.forEach(function (reviewer) {
+        var row = document.createElement('tr');
+        row.innerHTML =
+          '<td>' + reviewer.id + '</td>' +
+          '<td>' + reviewer.email + '</td>' +
+          '<td>' + reviewer.activeAssignments + '</td>' +
+          '<td>' + reviewer.availableSlots + '</td>';
+        directory.appendChild(row);
+      });
+
+      var resultList = document.getElementById('assignment-result');
+      resultList.innerHTML = '';
+      assignments.forEach(function (assignment) {
+        var item = document.createElement('li');
+        item.textContent =
+          'Submission #' + assignment.submissionId +
+          ' assigned to Reviewer #' + assignment.reviewerAccountId +
+          ' (Assignment #' + assignment.id + ').';
+        resultList.appendChild(item);
+      });
+    };
+  </script>
+</body>
+</html>

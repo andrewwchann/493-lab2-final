@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Conference Pricing</title>
+</head>
+<body>
+  <main>
+    <h1>Conference Pricing</h1>
+    <p id="pricing-error" aria-live="polite"></p>
+    <table id="pricing-table" border="1">
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Price</th>
+          <th>Currency</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </main>
+  <script>
+    window.renderPricing = function renderPricing(payload) {
+      var tableBody = document.querySelector('#pricing-table tbody');
+      tableBody.innerHTML = '';
+      document.getElementById('pricing-error').textContent =
+        (payload.errors && payload.errors.form) || '';
+
+      (payload.categories || []).forEach(function (category) {
+        var row = document.createElement('tr');
+        row.innerHTML =
+          '<td>' + category.attendeeType + '</td>' +
+          '<td>' + category.price + '</td>' +
+          '<td>' + category.currency + '</td>';
+        tableBody.appendChild(row);
+      });
+    };
+  </script>
+</body>
+</html>

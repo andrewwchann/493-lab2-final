@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Update Manuscript</title>
+</head>
+<body>
+  <main>
+    <h1>Update Manuscript</h1>
+    <form method="post" action="/submissions/replace" novalidate>
+      <label for="submissionId">Submission ID</label>
+      <input id="submissionId" name="submissionId" type="number" required>
+
+      <label for="file">Replacement Manuscript</label>
+      <input id="file" name="file" type="file" required>
+
+      <button type="submit">Replace Manuscript</button>
+    </form>
+    <p id="replace-error" aria-live="polite"></p>
+  </main>
+</body>
+</html>

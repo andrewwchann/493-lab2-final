@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Public Schedule</title>
+</head>
+<body>
+  <main>
+    <h1>Conference Schedule</h1>
+    <div id="public-schedule" aria-live="polite"></div>
+    <p id="public-schedule-error" aria-live="polite"></p>
+  </main>
+  <script>
+    window.renderPublicSchedule = function renderPublicSchedule(payload) {
+      if (payload.errors && payload.errors.form) {
+        document.getElementById('public-schedule-error').textContent = payload.errors.form;
+        document.getElementById('public-schedule').innerHTML = '';
+        return;
+      }
+
+      document.getElementById('public-schedule-error').textContent = '';
+      const schedule = payload.schedule || {};
+      document.getElementById('public-schedule').innerHTML =
+        '<p>Status: ' + (schedule.status || 'N/A') + '</p>' +
+        '<div>' + (schedule.publishedHtmlSnapshot || '') + '</div>';
+    };
+  </script>
+</body>
+</html>

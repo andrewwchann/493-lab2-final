@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Update Manuscript</title>
+</head>
+<body>
+  <main>
+    <h1>Update Manuscript</h1>
+    <form method="post" action="/submissions/replace" enctype="multipart/form-data" novalidate>
+      <label for="submissionId">Submission ID</label>
+      <input id="submissionId" name="submissionId" type="number" required>
+
+      <label for="file">Replacement Manuscript</label>
+      <input id="file" name="file" type="file" accept=".pdf,.doc,.docx,.tex,.zip" required>
+
+      <button type="submit">Replace Manuscript</button>
+    </form>
+    <p id="replace-message" aria-live="polite"></p>
+    <p id="replace-error" aria-live="polite"></p>
+    <p><a href="/dashboard/author">Back to Author Dashboard</a></p>
+  </main>
+  <script>
+    window.renderUpdateManuscript = function renderUpdateManuscript(payload) {
+      document.getElementById('replace-message').textContent = payload.message || '';
+      document.getElementById('replace-error').textContent =
+        (payload.errors && (payload.errors.file || payload.errors.form)) || '';
+    };
+  </script>
+</body>
+</html>
