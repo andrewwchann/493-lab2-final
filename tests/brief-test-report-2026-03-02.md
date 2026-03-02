@@ -14,10 +14,10 @@
 
 ## 2) Status Report on Tests That Pass (After Debugging)
 
-- Debugging status: no additional code debugging/fixes were required in this run because all tests passed on first execution. Although the coverage at first was around 70%, to fix this I asked codex to analyze my code and determine
-where more unit tests can be added. It then added the remaining test to achieve 100% branch coverage.
+- Debugging status: initial runs passed functionally, then targeted unit tests were added to cover remaining uncovered branches in `session_service`, `data_store`, and `register_controller` paths. Although the coverage at first was around 
+70%, to fix this I asked codex to analyze my code and determine where more unit tests can be added. It then added the remaining test to achieve 100% branch coverage.
 
-- Unit test status (`npm test`): `67 passed, 0 failed`.
+- Unit test status (`npm test`): `69 passed, 0 failed`.
 - Acceptance status (`npm test`): all scenario files passed:
   - `sc-001.md` PASS (3/3)
   - `sc-002.md` PASS (3/3)
@@ -32,6 +32,6 @@ where more unit tests can be added. It then added the remaining test to achieve 
 
 Result from `npm run coverage`:
 
-- `all files | line 99.54% | branch 100.00% | funcs 88.71%`
+- `all files | line 99.74% | branch 100.00% | funcs 89.07%`
 
 Conclusion: the project meets the required `100% branch coverage` target.

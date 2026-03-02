@@ -17,6 +17,14 @@
       <input id="password" name="password" type="password" required>
       <p id="password-error" class="error" aria-live="polite"></p>
 
+      <label for="account-type">Account Type</label>
+      <select id="account-type" name="accountType" required>
+        <option value="attendee" selected>Attendee</option>
+        <option value="author">Author</option>
+        <option value="editor">Editor</option>
+      </select>
+      <p id="account-type-error" class="error" aria-live="polite"></p>
+
       <button type="submit">Register</button>
     </form>
     <p id="form-errors" aria-live="polite"></p>
@@ -24,9 +32,20 @@
   </main>
   <script>
     window.renderRegistrationErrors = function renderRegistrationErrors(errors) {
+      var payload = window.__CMS_PAYLOAD || {};
+      var values = payload.values || {};
+
       document.getElementById('email-error').textContent = errors.email || '';
       document.getElementById('password-error').textContent = errors.password || '';
+      document.getElementById('account-type-error').textContent = errors.accountType || '';
       document.getElementById('form-errors').textContent = errors.form || '';
+
+      if (typeof values.email === 'string') {
+        document.getElementById('email').value = values.email;
+      }
+      if (typeof values.accountType === 'string') {
+        document.getElementById('account-type').value = values.accountType;
+      }
     };
   </script>
 </body>

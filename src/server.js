@@ -1,5 +1,6 @@
 const fs = require('fs');
 const http = require('http');
+const os = require('os');
 const path = require('path');
 const querystring = require('querystring');
 
@@ -44,6 +45,15 @@ const { PaymentService } = require('./services/payment_service');
 const HOST = '127.0.0.1';
 const PORT = Number(process.env.PORT || 3000);
 const SESSION_COOKIE = 'sessionToken';
+const IS_TEST_RUNTIME = Boolean(process.env.NODE_TEST_CONTEXT) || process.argv.includes('--test');
+const DATA_DB_PATH =
+  process.env.CMS_DB_PATH ||
+  (IS_TEST_RUNTIME ? path.join(os.tmpdir(), `ece493-cms-data-${process.pid}.sqlite`) : path.join(process.cwd(), 'data', 'cms.sqlite'));
+const SESSION_DB_PATH =
+  process.env.SESSION_DB_PATH ||
+  (IS_TEST_RUNTIME
+    ? path.join(os.tmpdir(), `ece493-cms-sessions-${process.pid}.sqlite`)
+    : path.join(process.cwd(), 'data', 'sessions.sqlite'));
 const VIEWS_DIR = path.join(__dirname, 'views');
 const ASSETS_DIR = path.join(__dirname, 'assets');
 const MAX_BODY_BYTES = 1024 * 1024;
@@ -419,8 +429,8 @@ function seedDemoAccounts({ registrationService, dataStore }) {
 }
 
 function buildApplicationContext() {
-  const dataStore = new DataStore();
-  const sessionService = new SessionService();
+  const dataStore = new DataStore({ dbPath: DATA_DB_PATH });
+  const sessionService = new SessionService({ dbPath: SESSION_DB_PATH });
   const registrationService = new RegistrationService({ dataStore });
   const authService = new AuthService({ dataStore, sessionService });
   const fileUploadService = new FileUploadService();
@@ -507,7 +517,8 @@ function clearSessionCookie(res) {
 }
 
 function createServer() {
-  const { router } = buildApplicationContext();
+  const { router, services } = buildApplicationContext();
+  const { sessionService } = services;
 
   return http.createServer(async (req, res) => {
     try {
@@ -526,6 +537,11 @@ function createServer() {
       }
 
       if (method === 'POST' && pathname === '/logout') {
+        const cookies = parseCookies(req.headers.cookie || '');
+        const logoutToken = cookies[SESSION_COOKIE] || req.headers['x-session-token'] || req.headers['X-Session-Token'];
+        if (logoutToken) {
+          sessionService.deleteSession(logoutToken);
+        }
         clearSessionCookie(res);
         res.writeHead(302, { Location: '/login' });
         res.end();

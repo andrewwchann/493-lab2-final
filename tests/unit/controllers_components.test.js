@@ -14,14 +14,19 @@ const { TicketController } = require('../../src/controllers/ticket_controller');
 const { DataStore } = require('../../src/services/data_store');
 
 test('register and login controllers map service responses to status/view/redirect', () => {
+  let registerArgs = null;
   const registerController = new RegisterController({
     registrationService: {
-      register: () => ({ ok: true, account: { id: 10 }, redirectTo: '/login' }),
+      register: (args) => {
+        registerArgs = args;
+        return { ok: true, account: { id: 10 }, redirectTo: '/login' };
+      },
     },
   });
-  const reg = registerController.submit({ body: { email: 'a@b.com', password: 'X1!aaaaa' } });
+  const reg = registerController.submit({ body: { email: 'a@b.com', password: 'X1!aaaaa', accountType: 'author' } });
   assert.equal(reg.status, 201);
   assert.equal(reg.body.redirectTo, '/login');
+  assert.equal(registerArgs.accountType, 'author');
 
   const loginController = new LoginController({
     authService: {

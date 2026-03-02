@@ -43,6 +43,14 @@ test('data store CRUD clones values and supports updates', () => {
   assert.equal(ds.updateById('x', 999, { nope: true }), null);
 });
 
+test('data store supports file-backed sqlite path initialization', () => {
+  const tempDbPath = path.resolve('/tmp', `cms-datastore-${Date.now()}-${Math.random().toString(16).slice(2)}.sqlite`);
+  const ds = new DataStore({ dbPath: tempDbPath });
+  const inserted = ds.insert('file_backed', { value: 1 });
+  assert.equal(inserted.id, 1);
+  assert.equal(fs.existsSync(tempDbPath), true);
+});
+
 test('error policy redacts sensitive fields and builds retry error', () => {
   const redacted = redactSensitiveFields({ cardNumber: '1', cvv: '2', keep: 'x' });
   assert.equal(redacted.cardNumber, '[REDACTED]');
@@ -63,6 +71,29 @@ test('session service create/get/delete lifecycle works', () => {
   assert.equal(svc.getSession(session.token), null);
 });
 
+test('session service handles empty tokens and malformed stored roles safely', () => {
+  const tempDbPath = path.resolve('/tmp', `cms-sessions-${Date.now()}-${Math.random().toString(16).slice(2)}.sqlite`);
+  const svc = new SessionService({ dbPath: tempDbPath });
+
+  assert.equal(svc.getSession(''), null);
+  assert.equal(svc.deleteSession(''), false);
+
+  svc.db
+    .prepare('INSERT INTO sessions (token, account_id, roles_json, created_at) VALUES (?, ?, ?, ?)')
+    .run('tok-empty-roles', 1, '', '2026-01-01T00:00:00.000Z');
+  assert.deepEqual(svc.getSession('tok-empty-roles').roles, []);
+
+  svc.db
+    .prepare('INSERT INTO sessions (token, account_id, roles_json, created_at) VALUES (?, ?, ?, ?)')
+    .run('tok-object-roles', 2, '{"role":"author"}', '2026-01-01T00:00:00.000Z');
+  assert.deepEqual(svc.getSession('tok-object-roles').roles, []);
+
+  svc.db
+    .prepare('INSERT INTO sessions (token, account_id, roles_json, created_at) VALUES (?, ?, ?, ?)')
+    .run('tok-bad-json', 3, '{bad-json', '2026-01-01T00:00:00.000Z');
+  assert.deepEqual(svc.getSession('tok-bad-json').roles, []);
+});
+
 test('registration and auth service enforce validation and login flow', () => {
   const ds = new DataStore();
   const reg = new RegistrationService({ dataStore: ds });
@@ -75,6 +106,23 @@ test('registration and auth service enforce validation and login flow', () => {
   const created = reg.register({ email: 'User@Example.com', password: 'Strong123!' });
   assert.equal(created.ok, true);
   assert.equal(created.account.email, 'user@example.com');
+  assert.equal(created.account.roles[0], 'attendee');
+
+  const createdAuthor = reg.register({
+    email: 'author-typed@example.com',
+    password: 'Strong123!',
+    accountType: 'author',
+  });
+  assert.equal(createdAuthor.ok, true);
+  assert.equal(createdAuthor.account.roles[0], 'author');
+
+  const badType = reg.register({
+    email: 'bad-type@example.com',
+    password: 'Strong123!',
+    accountType: 'reviewer',
+  });
+  assert.equal(badType.ok, false);
+  assert.equal(Boolean(badType.errors.accountType), true);
 
   const dup = reg.register({ email: 'user@example.com', password: 'Strong123!' });
   assert.equal(dup.ok, false);
@@ -85,6 +133,10 @@ test('registration and auth service enforce validation and login flow', () => {
   const ok = auth.login({ identifier: 'user@example.com', password: 'Strong123!' });
   assert.equal(ok.ok, true);
   assert.match(ok.redirectTo, /dashboard/);
+
+  const authorLogin = auth.login({ identifier: 'author-typed@example.com', password: 'Strong123!' });
+  assert.equal(authorLogin.ok, true);
+  assert.match(authorLogin.redirectTo, /dashboard\/author/);
 
   const bad = auth.login({ identifier: 'user@example.com', password: 'bad' });
   assert.equal(bad.code, 'INVALID_PASSWORD');
