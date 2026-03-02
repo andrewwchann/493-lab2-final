@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const ALLOWED_ACCOUNT_TYPES = new Set(['attendee', 'author', 'editor']);
 
 function hashPassword(password) {
   return crypto.createHash('sha256').update(password).digest('hex');
@@ -30,7 +31,7 @@ class RegistrationService {
     this.dataStore = dataStore;
   }
 
-  register({ email, password }) {
+  register({ email, password, accountType }) {
     const errors = {};
 
     if (!email) {
@@ -42,6 +43,11 @@ class RegistrationService {
     const passwordError = validateRegistrationPassword(password);
     if (passwordError) {
       errors.password = passwordError;
+    }
+
+    const normalizedAccountType = String(accountType || 'attendee').toLowerCase();
+    if (!ALLOWED_ACCOUNT_TYPES.has(normalizedAccountType)) {
+      errors.accountType = 'Account type must be attendee, author, or editor.';
     }
 
     const normalizedEmail = String(email || '').toLowerCase();
@@ -63,7 +69,7 @@ class RegistrationService {
     const account = this.dataStore.insert('accounts', {
       email: normalizedEmail,
       passwordHash: hashPassword(password),
-      roles: ['attendee'],
+      roles: [normalizedAccountType],
       status: 'active',
       createdAt: new Date().toISOString(),
     });

@@ -114,9 +114,15 @@ test('pricing and register controllers cover error branches', () => {
       register: () => ({ ok: false, errors: { email: 'bad' } }),
     },
   });
+  assert.equal(register.showForm().status, 200);
   const registerResp = register.submit({ body: { email: 'x', password: 'y' } });
   assert.equal(registerResp.status, 400);
   assert.equal(registerResp.body.view, 'register.html');
+
+  const registerDefaultValues = register.submit({ body: { password: 'y' } });
+  assert.equal(registerDefaultValues.status, 400);
+  assert.equal(registerDefaultValues.body.values.email, '');
+  assert.equal(registerDefaultValues.body.values.accountType, 'attendee');
 });
 
 test('registration controller covers pricing unavailable and submit branch permutations', async () => {

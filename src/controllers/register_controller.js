@@ -16,6 +16,7 @@ class RegisterController {
     const result = this.registrationService.register({
       email: body.email,
       password: body.password,
+      accountType: body.accountType,
     });
 
     if (!result.ok) {
@@ -24,6 +25,10 @@ class RegisterController {
         body: {
           view: 'register.html',
           errors: result.errors,
+          values: {
+            email: body.email || '',
+            accountType: body.accountType || 'attendee',
+          },
         },
       };
     }
