@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Edit Schedule</title>
+</head>
+<body>
+  <main>
+    <h1>Edit Draft Schedule</h1>
+    <form method="post" action="/schedule/edit">
+      <label for="schedule-id">Schedule ID</label>
+      <input id="schedule-id" name="scheduleId" type="number" required>
+
+      <p>Edit entries using the CMS schedule editor UI payload format.</p>
+      <button type="submit">Save Draft Changes</button>
+      <button type="submit" name="cancel" value="true">Cancel Edits</button>
+    </form>
+
+    <section>
+      <h2>Updated Preview</h2>
+      <div id="schedule-edit-preview"></div>
+      <p id="schedule-edit-message" aria-live="polite"></p>
+      <p id="schedule-edit-error" aria-live="polite"></p>
+    </section>
+    <p><a href="/schedule/publish">Go to Publish Schedule</a></p>
+    <p><a href="/dashboard/editor">Back to Editor Dashboard</a></p>
+  </main>
+  <script>
+    window.renderScheduleEditResult = function renderScheduleEditResult(payload) {
+      document.getElementById('schedule-edit-message').textContent = payload.message || '';
+      document.getElementById('schedule-edit-error').textContent =
+        (payload.errors && payload.errors.form) || '';
+      document.getElementById('schedule-edit-preview').innerHTML = payload.previewHtml || '';
+    };
+  </script>
+</body>
+</html>

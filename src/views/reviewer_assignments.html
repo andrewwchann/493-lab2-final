@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reviewer Assignments</title>
+</head>
+<body>
+  <main>
+    <h1>My Accepted Review Assignments</h1>
+    <p id="assignment-message" aria-live="polite"></p>
+    <p id="assignment-empty" aria-live="polite"></p>
+    <ul id="assignment-list"></ul>
+    <p><a href="/dashboard/reviewer">Back to Reviewer Dashboard</a></p>
+  </main>
+
+  <script>
+    window.renderReviewerAssignments = function renderReviewerAssignments(payload) {
+      var list = document.getElementById('assignment-list');
+      var empty = document.getElementById('assignment-empty');
+      var messageMap = {
+        'invitation-accepted': 'Invitation accepted successfully.',
+        'invitation-declined': 'Invitation declined.',
+        'review-submitted': 'Review submitted successfully.'
+      };
+
+      document.getElementById('assignment-message').textContent =
+        messageMap[payload.message] || payload.message || '';
+
+      list.innerHTML = '';
+      var assignments = payload.assignments || [];
+      if (assignments.length === 0) {
+        empty.textContent = 'No papers currently assigned for review.';
+        return;
+      }
+
+      empty.textContent = '';
+      assignments.forEach(function (assignment) {
+        var item = document.createElement('li');
+        var openLink = '/reviews/form?assignmentId=' + encodeURIComponent(assignment.id);
+        var manuscriptLink = assignment.manuscriptUrl
+          ? '<br><a href="' + assignment.manuscriptUrl + '" target="_blank" rel="noopener">View Manuscript (' +
+              (assignment.manuscriptFileName || 'file') + ')</a>'
+          : '';
+        item.innerHTML =
+          '<strong>' + (assignment.title || ('Submission #' + assignment.submissionId)) + '</strong>' +
+          '<br><span>' + (assignment.abstract || 'No abstract available.') + '</span>' +
+          manuscriptLink +
+          '<br><a href="' + openLink + '">Open Review Form</a>';
+        list.appendChild(item);
+      });
+    };
+  </script>
+</body>
+</html>

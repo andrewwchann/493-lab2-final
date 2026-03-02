@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Publish Schedule</title>
+</head>
+<body>
+  <main>
+    <h1>Publish Schedule</h1>
+    <section>
+      <h2>Draft Schedules Ready to Publish</h2>
+      <p id="publish-draft-empty" aria-live="polite"></p>
+      <table border="1">
+        <thead>
+          <tr>
+            <th>Schedule ID</th>
+            <th>Generated At</th>
+            <th>Entries</th>
+            <th>Submission IDs</th>
+            <th>Select</th>
+          </tr>
+        </thead>
+        <tbody id="publish-draft-list"></tbody>
+      </table>
+    </section>
+
+    <form method="post" action="/schedule/publish">
+      <label for="publish-schedule-id">Schedule ID</label>
+      <input id="publish-schedule-id" name="scheduleId" type="number" required>
+      <p id="publish-selected" aria-live="polite"></p>
+
+      <label>
+        <input id="confirm-publish" name="confirmed" type="checkbox" value="true" required>
+        I confirm this schedule is final and ready to publish.
+      </label>
+
+      <button type="submit">Publish Schedule</button>
+    </form>
+
+    <p id="schedule-publish-error" aria-live="polite"></p>
+    <p id="schedule-publish-warning" aria-live="polite"></p>
+    <p id="schedule-publish-success" aria-live="polite"></p>
+    <p><a href="/schedule/public">View Public Schedule</a></p>
+    <p><a href="/dashboard/editor">Back to Editor Dashboard</a></p>
+  </main>
+  <script>
+    window.renderSchedulePublishResult = function renderSchedulePublishResult(payload) {
+      var drafts = payload.draftSchedules || [];
+      var tbody = document.getElementById('publish-draft-list');
+      var empty = document.getElementById('publish-draft-empty');
+      var selectedInput = document.getElementById('publish-schedule-id');
+      var selectedId = payload.selectedScheduleId || (payload.schedule && payload.schedule.id) || '';
+      tbody.innerHTML = '';
+
+      if (drafts.length === 0) {
+        empty.textContent = 'No draft schedules are currently available for publishing.';
+      } else {
+        empty.textContent = '';
+        drafts.forEach(function (draft) {
+          var row = document.createElement('tr');
+          row.innerHTML =
+            '<td>' + draft.id + '</td>' +
+            '<td>' + (draft.generatedAt || '') + '</td>' +
+            '<td>' + (draft.itemCount || 0) + '</td>' +
+            '<td>' + ((draft.submissionIds || []).join(', ') || 'N/A') + '</td>' +
+            '<td><button type="button" data-schedule-id="' + draft.id + '">Use This Schedule</button></td>';
+          tbody.appendChild(row);
+        });
+      }
+
+      if (selectedId) {
+        selectedInput.value = selectedId;
+      } else if (!selectedInput.value && drafts.length > 0) {
+        selectedInput.value = drafts[0].id;
+      }
+
+      tbody.querySelectorAll('button[data-schedule-id]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          var scheduleId = button.getAttribute('data-schedule-id');
+          selectedInput.value = scheduleId;
+          document.getElementById('publish-selected').textContent = 'Selected draft schedule #' + scheduleId + '.';
+        });
+      });
+
+      document.getElementById('publish-selected').textContent =
+        selectedInput.value ? 'Selected draft schedule #' + selectedInput.value + '.' : '';
+      document.getElementById('schedule-publish-error').textContent =
+        (payload.errors && payload.errors.form) || '';
+      document.getElementById('schedule-publish-warning').textContent = payload.notificationWarning || '';
+      document.getElementById('schedule-publish-success').textContent =
+        payload.schedule ? 'Schedule #' + payload.schedule.id + ' is now public.' : '';
+    };
+  </script>
+</body>
+</html>

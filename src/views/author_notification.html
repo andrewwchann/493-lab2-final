@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Author Notification</title>
+</head>
+<body>
+  <main>
+    <h1>Decision Notification</h1>
+    <p id="author-notice" aria-live="polite"></p>
+    <p><a href="/dashboard/editor">Back to Editor Dashboard</a></p>
+  </main>
+
+  <script>
+    window.renderAuthorNotification = function renderAuthorNotification(payload) {
+      var status = payload.deliveryStatus || 'unknown';
+      document.getElementById('author-notice').textContent =
+        status === 'sent'
+          ? 'Decision notification delivered to the author.'
+          : 'Decision recorded. Notification delivery failed; author can still view decision in dashboard.';
+    };
+  </script>
+</body>
+</html>

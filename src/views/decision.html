@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Final Decision</title>
+</head>
+<body>
+  <main>
+    <h1>Final Paper Decision</h1>
+
+    <h2>Ready For Decision</h2>
+    <p id="decision-ready-empty" aria-live="polite"></p>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Submission ID</th>
+          <th>Title</th>
+          <th>Reviews Completed</th>
+          <th>Manuscript</th>
+        </tr>
+      </thead>
+      <tbody id="decision-ready-list"></tbody>
+    </table>
+
+    <form method="post" action="/editor/decision" novalidate>
+      <label for="decision-submission-id">Submission ID</label>
+      <input id="decision-submission-id" name="submissionId" type="number" required>
+
+      <label for="decision-choice">Decision</label>
+      <select id="decision-choice" name="decision" required>
+        <option value="">Select</option>
+        <option value="accept">Accept</option>
+        <option value="reject">Reject</option>
+      </select>
+
+      <label for="decision-rationale">Rationale</label>
+      <textarea id="decision-rationale" name="rationale"></textarea>
+
+      <button type="submit">Save Decision</button>
+    </form>
+
+    <p id="decision-message" aria-live="polite"></p>
+    <p id="decision-status" aria-live="polite"></p>
+    <p id="decision-warning" aria-live="polite"></p>
+    <p id="decision-errors" aria-live="polite"></p>
+
+    <h2>Decided Papers</h2>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Submission ID</th>
+          <th>Title</th>
+          <th>Status</th>
+          <th>Decision</th>
+          <th>Decided At</th>
+        </tr>
+      </thead>
+      <tbody id="decision-decided-list"></tbody>
+    </table>
+
+    <p><a href="/editor/reviews">Back to Editor Reviews</a></p>
+    <p><a href="/dashboard/editor">Back to Editor Dashboard</a></p>
+  </main>
+
+  <script>
+    window.renderDecision = function renderDecision(payload) {
+      if (payload.submissionId) {
+        document.getElementById('decision-submission-id').value = payload.submissionId;
+      }
+
+      document.getElementById('decision-message').textContent = payload.message || '';
+      document.getElementById('decision-warning').textContent = payload.warning || '';
+      document.getElementById('decision-errors').textContent =
+        (payload.errors && payload.errors.form) || '';
+
+      var ready = payload.readyPapers || [];
+      var decided = payload.decidedPapers || [];
+
+      var readyBody = document.getElementById('decision-ready-list');
+      var readyEmpty = document.getElementById('decision-ready-empty');
+      readyBody.innerHTML = '';
+      if (ready.length === 0) {
+        readyEmpty.textContent = 'No papers currently have 3 completed reviews.';
+      } else {
+        readyEmpty.textContent = '';
+        ready.forEach(function (paper) {
+          var row = document.createElement('tr');
+          var manuscript = paper.manuscriptUrl
+            ? '<a href="' + paper.manuscriptUrl + '" target="_blank" rel="noopener">' +
+                (paper.manuscriptFileName || 'View') + '</a>'
+            : 'Unavailable';
+          row.innerHTML =
+            '<td><button type="button" data-decision-id="' + paper.id + '">' + paper.id + '</button></td>' +
+            '<td>' + (paper.title || '') + '</td>' +
+            '<td>' + (paper.completedReviewCount || 0) + '/3</td>' +
+            '<td>' + manuscript + '</td>';
+          readyBody.appendChild(row);
+        });
+      }
+
+      readyBody.querySelectorAll('button[data-decision-id]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          document.getElementById('decision-submission-id').value = btn.getAttribute('data-decision-id');
+        });
+      });
+
+      var decidedBody = document.getElementById('decision-decided-list');
+      decidedBody.innerHTML = '';
+      decided.forEach(function (paper) {
+        var row = document.createElement('tr');
+        row.innerHTML =
+          '<td>' + paper.id + '</td>' +
+          '<td>' + (paper.title || '') + '</td>' +
+          '<td>' + (paper.status || '') + '</td>' +
+          '<td>' + (paper.decision || '') + '</td>' +
+          '<td>' + (paper.decidedAt || '') + '</td>';
+        decidedBody.appendChild(row);
+      });
+
+      var summary = payload.submissionSummary || null;
+      document.getElementById('decision-status').textContent = summary
+        ? 'Submission #' + summary.id + ' is currently "' + (summary.status || '') +
+          '" with ' + (summary.completedReviewCount || 0) + '/3 completed reviews.'
+        : '';
+    };
+  </script>
+</body>
+</html>

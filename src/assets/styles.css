@@ -1,0 +1,155 @@
+:root {
+  --bg: #f5f7fb;
+  --panel: #ffffff;
+  --text: #1b2733;
+  --muted: #5e6a76;
+  --accent: #1c6dd0;
+  --accent-dark: #1453a1;
+  --danger: #b42318;
+  --success: #067647;
+  --warning: #b54708;
+  --border: #d0d7de;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--text);
+  background: linear-gradient(160deg, #eef2f7 0%, #f9fbff 50%, #eef7ff 100%);
+}
+
+main {
+  width: min(960px, 92vw);
+  margin: 2rem auto;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(16, 24, 40, 0.08);
+  padding: 1.25rem 1.5rem;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 0.75rem;
+}
+
+h1 {
+  font-size: 1.55rem;
+}
+
+h2 {
+  font-size: 1.15rem;
+  margin-top: 1.2rem;
+}
+
+p,
+li,
+label,
+input,
+select,
+textarea,
+button,
+a,
+table {
+  font-size: 0.95rem;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+form {
+  display: grid;
+  gap: 0.55rem;
+  margin-bottom: 1rem;
+}
+
+input,
+select,
+textarea,
+button {
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  padding: 0.58rem 0.7rem;
+}
+
+textarea {
+  min-height: 120px;
+}
+
+button {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  cursor: pointer;
+}
+
+button:hover {
+  background: var(--accent-dark);
+}
+
+button + button {
+  margin-left: 0.5rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.6rem;
+}
+
+th,
+td {
+  border: 1px solid var(--border);
+  padding: 0.45rem 0.5rem;
+  text-align: left;
+}
+
+th {
+  background: #f7f9fc;
+}
+
+.error,
+[id$="-error"] {
+  color: var(--danger);
+  min-height: 1.1rem;
+}
+
+[id$="-success"],
+#dashboard-flash {
+  color: var(--success);
+  min-height: 1.1rem;
+}
+
+[id$="-warning"] {
+  color: var(--warning);
+  min-height: 1.1rem;
+}
+
+section {
+  border-top: 1px solid #edf1f5;
+  padding-top: 0.9rem;
+  margin-top: 0.9rem;
+}
+
+@media (max-width: 640px) {
+  main {
+    margin: 1rem auto;
+    padding: 1rem;
+  }
+
+  button + button {
+    margin-left: 0;
+    margin-top: 0.4rem;
+  }
+}

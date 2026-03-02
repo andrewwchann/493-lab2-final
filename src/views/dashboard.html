@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard</title>
+</head>
+<body>
+  <main>
+    <h1>CMS Dashboard</h1>
+    <p id="dashboard-context" aria-live="polite"></p>
+    <p id="dashboard-flash" aria-live="polite"></p>
+
+    <section data-role="author">
+      <h2>Author</h2>
+      <p>Submission and draft management modules.</p>
+      <p>
+        <a href="/submissions/new">Submit Paper</a> |
+        <a href="/submissions/replace">Update Manuscript</a> |
+        <a href="/submissions/drafts">View Drafts</a>
+      </p>
+      <p>Conference attendance and payment.</p>
+      <p>
+        <a href="/pricing">View Conference Pricing</a> |
+        <a href="/conference/register">Register and Pay</a>
+      </p>
+      <section id="author-notifications" hidden>
+        <h3>Decision Notifications</h3>
+        <ul id="author-notification-list"></ul>
+      </section>
+    </section>
+
+    <section data-role="reviewer">
+      <h2>Reviewer</h2>
+      <p>Assignment and review form modules.</p>
+      <p>
+        <a href="/reviews/invitation">Respond to Invitation</a> |
+        <a href="/reviews/assignments">View Accepted Assignments</a> |
+        <a href="/reviews/form">Open Review Form</a>
+      </p>
+    </section>
+
+    <section data-role="editor">
+      <h2>Editor</h2>
+      <p>Reviewer assignment, decisions, and scheduling modules.</p>
+      <p>
+        <a href="/reviews/assign">Assign Reviewers</a> |
+        <a href="/editor/reviews">View Completed Reviews</a> |
+        <a href="/editor/decision">Make Decision</a> |
+        <a href="/schedule/generate">Generate Schedule</a> |
+        <a href="/schedule/edit">Edit Schedule</a> |
+        <a href="/schedule/publish">Publish Schedule</a> |
+        <a href="/schedule/public">View Public Schedule</a>
+      </p>
+    </section>
+
+    <section data-role="attendee">
+      <h2>Attendee</h2>
+      <p>Pricing, registration, and ticket modules.</p>
+      <p>
+        <a href="/pricing">View Pricing</a> |
+        <a href="/conference/register">Conference Registration</a>
+      </p>
+    </section>
+
+    <section>
+      <h2>Conference Access</h2>
+      <p>All signed-in users can view the published schedule and register for attendance.</p>
+      <p>
+        <a href="/schedule/public">View Published Schedule</a> |
+        <a href="/conference/register">Register and Pay</a>
+      </p>
+      <p id="dashboard-attendance" aria-live="polite"></p>
+    </section>
+
+    <section>
+      <h2>Account</h2>
+      <p>
+        <a href="/password/change">Change Password</a>
+      </p>
+      <form method="post" action="/logout">
+        <button type="submit">Log Out</button>
+      </form>
+    </section>
+  </main>
+  <script>
+    window.renderDashboardContext = function renderDashboardContext(payload) {
+      var role = payload.role || '';
+      var accountId = payload.accountId || '';
+      var message = payload.message || '';
+      var context = document.getElementById('dashboard-context');
+      var flash = document.getElementById('dashboard-flash');
+      var attendance = document.getElementById('dashboard-attendance');
+      var notificationPanel = document.getElementById('author-notifications');
+      var notificationList = document.getElementById('author-notification-list');
+
+      if (role) {
+        context.textContent = 'Signed in as ' + role + ' (Account #' + accountId + ').';
+      } else {
+        context.textContent = '';
+      }
+
+      var messageTextByCode = {
+        'paper-submitted': 'Paper submitted successfully.',
+        'draft-saved': 'Draft saved successfully.',
+        'password-updated': 'Password updated successfully.',
+        'manuscript-updated': 'Manuscript updated successfully.',
+        'decision-recorded': 'Decision recorded successfully.',
+        'registration-complete': 'Conference registration completed. You can attend.',
+        'registration-pending-ticket': 'Payment received. Ticket generation is still in progress.',
+      };
+      flash.textContent = messageTextByCode[message] || '';
+
+      var roleSections = document.querySelectorAll('section[data-role]');
+      roleSections.forEach(function (section) {
+        if (!role) {
+          section.hidden = false;
+          return;
+        }
+        section.hidden = section.getAttribute('data-role') !== role;
+      });
+
+      notificationList.innerHTML = '';
+      var notifications = payload.authorNotifications || [];
+      notifications.forEach(function (entry) {
+        var item = document.createElement('li');
+        item.textContent = (entry.message || 'Decision update') + ' (' + (entry.createdAt || 'time unavailable') + ')';
+        notificationList.appendChild(item);
+      });
+      notificationPanel.hidden = !(role === 'author' && notifications.length > 0);
+
+      var attendanceState = payload.attendance || null;
+      if (!attendanceState) {
+        attendance.textContent = 'Attendance status: not registered yet.';
+      } else if (attendanceState.canAttend) {
+        attendance.textContent = attendanceState.ticketReference
+          ? 'Attendance status: eligible to attend. Ticket reference: ' + attendanceState.ticketReference + '.'
+          : 'Attendance status: payment confirmed. You are eligible to attend.';
+      } else if (attendanceState.status === 'ticket_pending') {
+        attendance.textContent = 'Attendance status: payment confirmed, ticket pending.';
+      } else {
+        attendance.textContent = 'Attendance status: ' + (attendanceState.status || 'in progress') + '.';
+      }
+    };
+  </script>
+</body>
+</html>

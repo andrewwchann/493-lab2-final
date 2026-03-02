@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Editor Reviews</title>
+</head>
+<body>
+  <main>
+    <h1>Completed Reviews</h1>
+
+    <h2>Papers Ready For Final Decision</h2>
+    <p id="editor-ready-empty" aria-live="polite"></p>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Submission ID</th>
+          <th>Title</th>
+          <th>Reviews Completed</th>
+          <th>Manuscript</th>
+        </tr>
+      </thead>
+      <tbody id="editor-ready-list"></tbody>
+    </table>
+
+    <form method="get" action="/editor/reviews" novalidate>
+      <label for="editor-submission-id">Submission ID</label>
+      <input id="editor-submission-id" name="submissionId" type="number" required>
+      <button type="submit">Load Reviews</button>
+    </form>
+
+    <p id="editor-review-errors" aria-live="polite"></p>
+    <p id="editor-submission-status" aria-live="polite"></p>
+    <p id="editor-manuscript"></p>
+    <div id="reviews"></div>
+    <p>
+      <a id="decision-link" href="/editor/decision">Proceed to Decision</a>
+    </p>
+
+    <h2>Decided Papers</h2>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Submission ID</th>
+          <th>Title</th>
+          <th>Status</th>
+          <th>Decision</th>
+          <th>Decided At</th>
+        </tr>
+      </thead>
+      <tbody id="editor-decided-list"></tbody>
+    </table>
+    <p><a href="/dashboard/editor">Back to Editor Dashboard</a></p>
+  </main>
+
+  <script>
+    window.renderEditorReviews = function renderEditorReviews(payload) {
+      var ready = payload.readyPapers || [];
+      var decided = payload.decidedPapers || [];
+
+      var readyTbody = document.getElementById('editor-ready-list');
+      var readyEmpty = document.getElementById('editor-ready-empty');
+      readyTbody.innerHTML = '';
+      if (ready.length === 0) {
+        readyEmpty.textContent = 'No papers currently have all 3 completed reviews.';
+      } else {
+        readyEmpty.textContent = '';
+        ready.forEach(function (paper) {
+          var row = document.createElement('tr');
+          var manuscript = paper.manuscriptUrl
+            ? '<a href="' + paper.manuscriptUrl + '" target="_blank" rel="noopener">' +
+                (paper.manuscriptFileName || 'View') + '</a>'
+            : 'Unavailable';
+          row.innerHTML =
+            '<td><button type="button" data-ready-id="' + paper.id + '">' + paper.id + '</button></td>' +
+            '<td>' + (paper.title || '') + '</td>' +
+            '<td>' + (paper.completedReviewCount || 0) + '/3</td>' +
+            '<td>' + manuscript + '</td>';
+          readyTbody.appendChild(row);
+        });
+      }
+
+      var decidedTbody = document.getElementById('editor-decided-list');
+      decidedTbody.innerHTML = '';
+      decided.forEach(function (paper) {
+        var row = document.createElement('tr');
+        row.innerHTML =
+          '<td>' + paper.id + '</td>' +
+          '<td>' + (paper.title || '') + '</td>' +
+          '<td>' + (paper.status || '') + '</td>' +
+          '<td>' + (paper.decision || '') + '</td>' +
+          '<td>' + (paper.decidedAt || '') + '</td>';
+        decidedTbody.appendChild(row);
+      });
+
+      if (payload.submissionId) {
+        document.getElementById('editor-submission-id').value = payload.submissionId;
+        document.getElementById('decision-link').href =
+          '/editor/decision?submissionId=' + encodeURIComponent(payload.submissionId);
+      }
+
+      readyTbody.querySelectorAll('button[data-ready-id]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-ready-id');
+          document.getElementById('editor-submission-id').value = id;
+          document.getElementById('decision-link').href =
+            '/editor/decision?submissionId=' + encodeURIComponent(id);
+        });
+      });
+
+      var summary = payload.submissionSummary || null;
+      document.getElementById('editor-submission-status').textContent = summary
+        ? 'Submission #' + summary.id + ' status: ' + (summary.status || '') +
+          ' | Completed reviews: ' + (summary.completedReviewCount || 0) + '/3'
+        : '';
+
+      document.getElementById('editor-manuscript').innerHTML = payload.manuscriptUrl
+        ? 'Manuscript: <a href="' + payload.manuscriptUrl + '" target="_blank" rel="noopener">' +
+            (payload.manuscriptFileName || 'View Manuscript') + '</a>'
+        : '';
+
+      document.getElementById('editor-review-errors').textContent =
+        (payload.errors && payload.errors.form) || '';
+
+      var reviewsContainer = document.getElementById('reviews');
+      reviewsContainer.innerHTML = '';
+      var reviews = payload.reviews || [];
+      reviews.forEach(function (review, index) {
+        var section = document.createElement('section');
+        section.innerHTML =
+          '<h2>Review ' + (index + 1) + '</h2>' +
+          '<p><strong>Recommendation:</strong> ' + (review.recommendation || '') + '</p>' +
+          '<p><strong>Scores:</strong> ' + (typeof review.scores === 'string' ? review.scores : JSON.stringify(review.scores || {})) + '</p>' +
+          '<p><strong>Comments:</strong> ' + (review.comments || '') + '</p>';
+        reviewsContainer.appendChild(section);
+      });
+    };
+  </script>
+</body>
+</html>

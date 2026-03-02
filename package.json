@@ -1,0 +1,11 @@
+{
+  "name": "ece493-cms",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "test": "node --test tests/unit/*.test.js && node tests/acceptance/run_acceptance_checks.js",
+    "coverage": "TEST_FILES=$(ls tests/unit/*.test.js | rg -v 'http_flows\\.test\\.js|upload_visibility\\.test\\.js' | tr '\\n' ' '); node --test --experimental-test-coverage --test-coverage-include='src/**' $TEST_FILES",
+    "lint": "node -e \"console.log('lint: no ESLint config found; skipping static lint.')\""
+  }
+}

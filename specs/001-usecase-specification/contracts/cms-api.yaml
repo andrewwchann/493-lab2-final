@@ -1,0 +1,884 @@
+openapi: 3.0.3
+info:
+  title: CMS Use-Case API Contracts
+  version: 1.0.0
+  description: |
+    API contracts derived exclusively from UC-01 to UC-23 and acceptance tests.
+    External services (file upload, notification, payment, public publication,
+    ticketing) are modeled via explicit endpoints and error responses.
+servers:
+  - url: https://cms.local/api
+
+paths:
+  /accounts/register:
+    post:
+      summary: Register a new CMS account (UC-01)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Account created; redirect to login.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '400':
+          description: Invalid or duplicate data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Email or username already exists.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /accounts/validate:
+    post:
+      summary: Validate registration credentials (UC-02)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CredentialValidationRequest'
+      responses:
+        '200':
+          description: Credentials valid.
+        '400':
+          description: Invalid email/password format.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Email already exists.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sessions:
+    post:
+      summary: Log in to CMS (UC-03)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Session created; role-based dashboard allowed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '401':
+          description: Invalid credentials.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Login service unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /accounts/password:
+    put:
+      summary: Change account password (UC-04)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordChangeRequest'
+      responses:
+        '200':
+          description: Password updated.
+        '400':
+          description: Invalid current or new password.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not authenticated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /submissions:
+    post:
+      summary: Submit a paper manuscript (UC-06)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SubmissionRequest'
+      responses:
+        '201':
+          description: Submission stored; status=Submitted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Submission'
+        '400':
+          description: Missing fields or invalid file.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: File too large (>7MB).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Database or upload service failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /submissions/{submissionId}/manuscript:
+    put:
+      summary: Replace submitted manuscript (UC-07)
+      parameters:
+        - $ref: '#/components/parameters/SubmissionId'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ManuscriptReplaceRequest'
+      responses:
+        '200':
+          description: Manuscript replaced.
+        '400':
+          description: Invalid file or missing submission.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Storage failure; prior version preserved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /submissions/{submissionId}/validate:
+    post:
+      summary: Validate submission fields (UC-08)
+      parameters:
+        - $ref: '#/components/parameters/SubmissionId'
+      responses:
+        '200':
+          description: Submission valid.
+        '400':
+          description: Invalid or incomplete fields.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /submissions/drafts:
+    post:
+      summary: Save draft submission (UC-09)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DraftRequest'
+      responses:
+        '201':
+          description: Draft saved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Submission'
+        '400':
+          description: Draft missing minimum required info.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      summary: List saved drafts for author (UC-09)
+      responses:
+        '200':
+          description: Draft list.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Submission'
+
+  /reviews/assignments:
+    post:
+      summary: Assign reviewers to paper (UC-10)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewerAssignmentRequest'
+      responses:
+        '201':
+          description: Exactly 3 reviewers assigned; invitations sent.
+        '400':
+          description: Invalid reviewer email or incorrect reviewer count.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Reviewer workload exceeds 5 papers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /reviewers/{reviewerId}/assignments:
+    get:
+      summary: View accepted assigned papers (UC-11)
+      parameters:
+        - $ref: '#/components/parameters/ReviewerId'
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [accepted]
+      responses:
+        '200':
+          description: List of accepted assignments.
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /review-invitations/{assignmentId}/response:
+    post:
+      summary: Accept or decline invitation (UC-13)
+      parameters:
+        - $ref: '#/components/parameters/AssignmentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvitationResponseRequest'
+      responses:
+        '200':
+          description: Response recorded; editor notified.
+        '400':
+          description: Invalid response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '410':
+          description: Invitation expired or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Storage failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /reviews/{assignmentId}/form:
+    get:
+      summary: Access review form (UC-12)
+      parameters:
+        - $ref: '#/components/parameters/AssignmentId'
+      responses:
+        '200':
+          description: Review form retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewForm'
+        '403':
+          description: Not accepted or deadline closed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Assignment not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: System error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: Submit completed review form (UC-14)
+      parameters:
+        - $ref: '#/components/parameters/AssignmentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewSubmissionRequest'
+      responses:
+        '200':
+          description: Review submitted; editor notified when all three complete.
+        '400':
+          description: Invalid form data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Deadline closed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Storage failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /editor/reviews:
+    get:
+      summary: Editor receives completed review sets (UC-15)
+      responses:
+        '200':
+          description: Completed review packages.
+
+  /editor/decisions:
+    post:
+      summary: Make final paper decision (UC-16)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecisionRequest'
+      responses:
+        '200':
+          description: Decision stored; author notified (UC-17).
+        '400':
+          description: Missing reviews or invalid decision.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /notifications/author-decision:
+    post:
+      summary: Notify author of final decision (UC-17)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthorDecisionNotice'
+      responses:
+        '200':
+          description: Notification sent.
+        '500':
+          description: Notification failure (decision remains stored).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /schedules/draft:
+    post:
+      summary: Generate conference schedule draft (UC-18)
+      responses:
+        '201':
+          description: Draft schedule generated and stored (publication occurs via UC-20).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '500':
+          description: Scheduling failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /schedules/{scheduleId}:
+    put:
+      summary: Edit conference schedule (UC-19)
+      parameters:
+        - $ref: '#/components/parameters/ScheduleId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleUpdateRequest'
+      responses:
+        '200':
+          description: Schedule updated.
+        '400':
+          description: Invalid edits.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /schedules/{scheduleId}/publish:
+    post:
+      summary: Publish final conference schedule (UC-20)
+      parameters:
+        - $ref: '#/components/parameters/ScheduleId'
+      responses:
+        '200':
+          description: Schedule published and publicly accessible (notification optional).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishResult'
+        '400':
+          description: Schedule not ready for publish.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Publication failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /schedules/public:
+    get:
+      summary: View published schedule (UC-20)
+      responses:
+        '200':
+          description: Published schedule HTML snapshot.
+          content:
+            text/html:
+              schema:
+                type: string
+        '404':
+          description: Schedule not published.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /pricing:
+    get:
+      summary: View conference pricing by attendee type (UC-23)
+      responses:
+        '200':
+          description: Pricing categories.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PricingCategory'
+
+  /registrations:
+    post:
+      summary: Register for conference and pay (UC-21)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrationRequest'
+      responses:
+        '201':
+          description: Registration confirmed; payment approved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Registration'
+        '402':
+          description: Payment declined.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Payment processing error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /tickets:
+    post:
+      summary: Generate registration confirmation ticket (UC-22)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketRequest'
+      responses:
+        '201':
+          description: Ticket generated and stored.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+        '202':
+          description: Payment succeeded; ticket delayed (pending).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+        '500':
+          description: Ticket generation failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  parameters:
+    SubmissionId:
+      in: path
+      name: submissionId
+      required: true
+      schema:
+        type: string
+    ReviewerId:
+      in: path
+      name: reviewerId
+      required: true
+      schema:
+        type: string
+    AssignmentId:
+      in: path
+      name: assignmentId
+      required: true
+      schema:
+        type: string
+    ScheduleId:
+      in: path
+      name: scheduleId
+      required: true
+      schema:
+        type: string
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+
+    Account:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        username:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+
+    Session:
+      type: object
+      properties:
+        id:
+          type: string
+        accountId:
+          type: string
+
+    RegisterRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+        passwordConfirm:
+          type: string
+
+    CredentialValidationRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+    LoginRequest:
+      type: object
+      required: [identifier, password]
+      properties:
+        identifier:
+          type: string
+        password:
+          type: string
+
+    PasswordChangeRequest:
+      type: object
+      required: [currentPassword, newPassword, confirmPassword]
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+        confirmPassword:
+          type: string
+
+    Submission:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        abstract:
+          type: string
+        keywords:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+
+    SubmissionRequest:
+      type: object
+      required: [title, abstract, keywords, manuscript]
+      properties:
+        title:
+          type: string
+        abstract:
+          type: string
+        keywords:
+          type: string
+        authors:
+          type: string
+        affiliation:
+          type: string
+        contactInfo:
+          type: string
+        manuscript:
+          type: string
+          format: binary
+
+    ManuscriptReplaceRequest:
+      type: object
+      required: [manuscript]
+      properties:
+        manuscript:
+          type: string
+          format: binary
+
+    DraftRequest:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        abstract:
+          type: string
+        keywords:
+          type: string
+
+    ReviewerAssignmentRequest:
+      type: object
+      required: [submissionId, reviewerEmails]
+      properties:
+        submissionId:
+          type: string
+        reviewerEmails:
+          type: array
+          minItems: 3
+          maxItems: 3
+          items:
+            type: string
+
+    InvitationResponseRequest:
+      type: object
+      required: [response]
+      properties:
+        response:
+          type: string
+          enum: [accept, decline]
+
+    ReviewForm:
+      type: object
+      properties:
+        scores:
+          type: object
+        comments:
+          type: string
+        recommendation:
+          type: string
+
+    ReviewSubmissionRequest:
+      type: object
+      required: [scores, comments, recommendation]
+      properties:
+        scores:
+          type: object
+        comments:
+          type: string
+        recommendation:
+          type: string
+
+    DecisionRequest:
+      type: object
+      required: [submissionId, decision]
+      properties:
+        submissionId:
+          type: string
+        decision:
+          type: string
+          enum: [accept, reject]
+        rationale:
+          type: string
+
+    AuthorDecisionNotice:
+      type: object
+      required: [submissionId, authorId, decision]
+      properties:
+        submissionId:
+          type: string
+        authorId:
+          type: string
+        decision:
+          type: string
+
+    Schedule:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScheduleItem'
+
+    ScheduleItem:
+      type: object
+      properties:
+        submissionId:
+          type: string
+        session:
+          type: string
+        room:
+          type: string
+        startTime:
+          type: string
+        endTime:
+          type: string
+
+    ScheduleUpdateRequest:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScheduleItem'
+
+    PublishResult:
+      type: object
+      properties:
+        scheduleId:
+          type: string
+        status:
+          type: string
+        notificationStatus:
+          type: string
+          description: Notification may fail without blocking publication.
+
+    PricingCategory:
+      type: object
+      properties:
+        attendeeType:
+          type: string
+        price:
+          type: number
+        currency:
+          type: string
+
+    RegistrationRequest:
+      type: object
+      required: [attendeeId, pricingCategoryId, paymentMethod]
+      properties:
+        attendeeId:
+          type: string
+        pricingCategoryId:
+          type: string
+        paymentMethod:
+          type: string
+        paymentDetails:
+          type: object
+
+    Registration:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+        pricingCategoryId:
+          type: string
+
+    TicketRequest:
+      type: object
+      required: [registrationId]
+      properties:
+        registrationId:
+          type: string
+
+    Ticket:
+      type: object
+      properties:
+        id:
+          type: string
+        ticketReference:
+          type: string
+        status:
+          type: string
